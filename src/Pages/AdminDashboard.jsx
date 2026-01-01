@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Shield, X } from "lucide-react";
+import { Plus, Shield, X, LayoutDashboard, MailWarning } from "lucide-react";
 import StatsOverview from "../Component/admin/StatsOverview";
 import DocumentForm from "../Component/admin/DocumentForm";
 import DocumentTable from "../Component/admin/DocumentTable";
@@ -7,9 +7,10 @@ import ReminderPanel from "../Component/admin/ReminderPanel";
 import supabase from "../lib/supabase";
 
 const Button = ({ variant = "default", className = "", children, ...props }) => {
-  const base = "inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 transition-colors disabled:opacity-50";
+  const base = "inline-flex items-center justify-center rounded-lg text-sm font-bold h-11 md:h-10 px-4 py-2 transition-all active:scale-95 disabled:opacity-50";
   const variantStyles = {
-    default: "bg-blue-700 text-white hover:bg-blue-800",
+    default: "bg-blue-700 text-white hover:bg-blue-800 shadow-md shadow-blue-100",
+    outline: "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
   };
   return (
     <button className={`${base} ${variantStyles[variant]} ${className}`} {...props}>
@@ -26,27 +27,33 @@ export default function AdminDashboardPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState("documents");
 
-  // ✅ for sidebar company selection
+  // Selection state for current company view
   const [selectedCompany, setSelectedCompany] = useState(null);
 
   const fetchDocuments = async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from("documents")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("documents")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (error) {
+      if (error) throw error;
+      
+      const docs = data || [];
+      setDocuments(docs);
+
+      // Auto-select first company if none selected
+      if (docs.length > 0 && !selectedCompany) {
+        const uniqueCompanies = Array.from(new Set(docs.map(d => d.company || "Unassigned")));
+        setSelectedCompany(uniqueCompanies[0]);
+      }
+    } catch (error) {
       console.error("Error fetching documents:", error);
       setDocuments([]);
-    } else {
-      setDocuments(data);
-      if (data.length > 0 && !selectedCompany) {
-        const firstCompany = data[0].company || "Unassigned";
-        setSelectedCompany(firstCompany);
-      }
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -56,17 +63,20 @@ export default function AdminDashboardPage() {
   const handleAddDocument = async (docData) => {
     setIsProcessing(true);
     try {
-      const newDoc = { ...docData, company: selectedCompany };
+      // Ensure the document is assigned to the currently viewed company
+      const newDoc = { ...docData, company: selectedCompany || docData.company || "Unassigned" };
       delete newDoc.id;
+
       const { error } = await supabase.from("documents").insert([newDoc]);
       if (error) throw error;
+      
       await fetchDocuments();
       setShowForm(false);
     } catch (err) {
       console.error("Failed to add document:", err);
-      alert("Error adding document. Check console for details.");
+    } finally {
+      setIsProcessing(false);
     }
-    setIsProcessing(false);
   };
 
   const handleUpdateDocument = async (updatedDoc) => {
@@ -84,9 +94,9 @@ export default function AdminDashboardPage() {
       setEditingDocument(null);
     } catch (err) {
       console.error("Failed to update document:", err);
-      alert("Failed to update document. Check console for details.");
+    } finally {
+      setIsProcessing(false);
     }
-    setIsProcessing(false);
   };
 
   const handleDelete = async (id) => {
@@ -97,7 +107,6 @@ export default function AdminDashboardPage() {
       await fetchDocuments();
     } catch (err) {
       console.error("Failed to delete document:", err);
-      alert("Failed to delete document. Check console for details.");
     }
   };
 
@@ -127,57 +136,62 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="py-8 px-4 sm:px-6 lg:px-8 bg-slate-50 flex-grow">
-      <div className="max-w-7xl mx-auto">
-        {/* --- Header --- */}
-        <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-700 rounded-lg flex items-center justify-center">
-              <Shield className="w-6 h-6 text-white" />
+    <div className="py-6 md:py-8 px-4 sm:px-6 lg:px-8 bg-slate-50 min-h-screen flex flex-col">
+      <div className="max-w-7xl mx-auto w-full">
+        {/* --- Responsive Header --- */}
+        <header className="mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+              <Shield className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
-              <p className="text-slate-500">Manage company documents and reminders</p>
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900 leading-tight">Admin Dashboard</h1>
+              <p className="text-xs md:text-sm text-slate-500 font-medium">Compliance & Registry Control</p>
             </div>
           </div>
+          
           {activeTab === "documents" && (
-            <Button onClick={showForm ? handleCancelForm : handleAddNew} className="gap-2">
+            <Button 
+              onClick={showForm ? handleCancelForm : handleAddNew} 
+              className={`w-full sm:w-auto gap-2 ${showForm ? 'bg-slate-800' : ''}`}
+            >
               {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              {showForm ? "Cancel Form" : "Add New Document"}
+              {showForm ? "Cancel Entry" : "Add Document"}
             </Button>
           )}
         </header>
 
+        {/* Stats Grid - Internal responsiveness handled by component */}
         <StatsOverview documents={documents} selectedCompany={selectedCompany} />
 
-        {/* --- Tabs --- */}
-        <div className="space-y-6">
-          <div className="border-b border-slate-200">
-            <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-              <button
-                onClick={() => handleTabChange("documents")}
-                className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "documents"
-                    ? "border-blue-700 text-blue-700"
-                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-                }`}
-              >
-                Documents
-              </button>
-              <button
-                onClick={() => handleTabChange("reminders")}
-                className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "reminders"
-                    ? "border-blue-700 text-blue-700"
-                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-                }`}
-              >
-                Email Reminders
-              </button>
-            </nav>
+        {/* --- Custom Styled Tabs --- */}
+        <div className="mt-8 space-y-6">
+          <div className="bg-white p-1 rounded-xl border border-slate-200 inline-flex w-full sm:w-auto shadow-sm">
+            <button
+              onClick={() => handleTabChange("documents")}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                activeTab === "documents"
+                  ? "bg-blue-700 text-white shadow-md"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Documents
+            </button>
+            <button
+              onClick={() => handleTabChange("reminders")}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                activeTab === "reminders"
+                  ? "bg-blue-700 text-white shadow-md"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              <MailWarning className="w-4 h-4" />
+              Reminders
+            </button>
           </div>
 
-          <div>
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
             {activeTab === "documents" && (
               showForm ? (
                 <DocumentForm
@@ -198,8 +212,13 @@ export default function AdminDashboardPage() {
                 />
               )
             )}
+            
             {activeTab === "reminders" && (
-              <ReminderPanel documents={documents} isLoading={isLoading} onUpdateDocument={handleUpdateDocument} />
+              <ReminderPanel 
+                documents={documents} 
+                isLoading={isLoading} 
+                onUpdateDocument={handleUpdateDocument} 
+              />
             )}
           </div>
         </div>
