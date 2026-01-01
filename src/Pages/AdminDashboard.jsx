@@ -42,7 +42,7 @@ export default function AdminDashboardPage() {
     } else {
       setDocuments(data);
       if (data.length > 0 && !selectedCompany) {
-        const firstCompany = data[0].company_name || "Unassigned";
+        const firstCompany = data[0].company || "Unassigned";
         setSelectedCompany(firstCompany);
       }
     }
@@ -56,7 +56,7 @@ export default function AdminDashboardPage() {
   const handleAddDocument = async (docData) => {
     setIsProcessing(true);
     try {
-      const newDoc = { ...docData, company_name: selectedCompany };
+      const newDoc = { ...docData, company: selectedCompany };
       delete newDoc.id;
       const { error } = await supabase.from("documents").insert([newDoc]);
       if (error) throw error;

@@ -123,11 +123,11 @@ export default function PublicDocumentsPage() {
                     <h3 className="font-semibold text-lg text-slate-800 pr-2">
                       {doc.name}
                     </h3>
-                    <span
+                    {/* <span
                       className={`text-xs font-medium px-2 py-1 rounded-full ${status.color}`}
                     >
                       {status.label}
-                    </span>
+                    </span> */}
                   </div>
                   <p className="text-sm text-slate-500 mb-4">
                     {doc.department}
