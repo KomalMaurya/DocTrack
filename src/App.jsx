@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FileText, Shield, LogOut, Home, Loader2 } from "lucide-react";
-import PublicDocumentsPage from './pages/PublicDocuments';
+import PublicDocumentsPage from './Pages/PublicDocuments';
 import AdminDashboardPage from './Pages/AdminDashboard';
 import LoginPage from './Pages/LoginPage';
 import supabase from './lib/supabase';
