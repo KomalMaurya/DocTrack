@@ -1,16 +1,118 @@
-# React + Vite
+DocTrack - Document Approval System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+DocTrack is a professional, mobile-responsive web application designed to track, manage, and monitor official document approvals. It features a public registry for transparency and an administrative console for robust lifecycle management of documents, including automated status tracking and stakeholder notifications.
 
-Currently, two official plugins are available:
+🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Public Registry
 
-## React Compiler
+Document Lookup: Search and filter through approved documents by name or department.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Detailed View: Access comprehensive document information, including process descriptions and required prerequisites.
 
-## Expanding the ESLint configuration
+Expiry Monitoring: Visual badges indicating document status (Active, Expiring Soon, Expired).
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Administrative Console
+
+Role-Based Access: Secure login system with administrative privileges required for data modification.
+
+Full CRUD Management: Create, Read, Update, and Delete document records seamlessly.
+
+Company Categorization: Group documents by company (e.g., Felix, Barmalt) for organized management.
+
+Automated Sync: The system automatically updates document status labels in the database based on real-time date calculations.
+
+Document Storage: Integration for linking official document URLs and application portals.
+
+Mobile Optimization
+
+Responsive Design: Fully optimized for mobile, tablet, and desktop views.
+
+Touch-Friendly UI: Large touch targets, segmented controls, and card-based layouts for mobile users.
+
+Adaptive Navigation: Hamburger menu and horizontal scrolling sidebars to maximize screen real estate.
+
+🛠 Tech Stack
+
+Frontend: React 18 (Vite)
+
+Styling: Tailwind CSS, Lucide React (Icons)
+
+Backend/Database: Supabase (PostgreSQL + PostgREST)
+
+State Management: React Hooks (useState, useEffect)
+
+Utilities: date-fns (Date handling), uuid (ID generation)
+
+📦 Installation & Setup
+
+Prerequisites
+
+Node.js (v18 or higher)
+
+A Supabase project
+
+Steps
+
+Clone the repository
+
+git clone <your-repo-url>
+cd DocTrack
+
+
+Install dependencies
+
+npm install
+
+
+Environment Configuration
+Create a .env file in the root directory and add your Supabase credentials:
+
+VITE_SUPABASE_URL=your_project_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+
+
+Database Schema
+Run the following SQL in your Supabase SQL Editor to set up the documents table:
+
+CREATE TABLE documents (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  name TEXT NOT NULL,
+  company TEXT,
+  department TEXT NOT NULL,
+  date_of_issue DATE NOT NULL,
+  expiry_date DATE NOT NULL,
+  status TEXT DEFAULT 'Active',
+  required_documents TEXT,
+  process_description TEXT,
+  application_link TEXT,
+  uploaded_document_url TEXT,
+  stakeholder_emails TEXT
+);
+
+
+Start Development Server
+
+npm run dev
+
+
+📂 Project Structure
+
+src/
+├── api/              # API clients and base configurations
+├── Component/        # Shared UI components
+│   └── admin/        # Dashboard, Forms, Tables, and Panels
+├── lib/              # Library initializations (Supabase, etc.)
+├── Pages/            # Main view containers (Public, Admin, Login)
+├── App.jsx           # Main application shell and routing logic
+└── main.jsx          # Entry point and global style imports
+
+
+🛡 Security
+
+Admin routes are guarded by a local session check.
+
+Administrative operations (Add/Edit/Delete) are protected via Supabase Row Level Security (RLS) policies based on the user's role.
+
+© 2025 Document Approval System. Built for professional compliance tracking.
